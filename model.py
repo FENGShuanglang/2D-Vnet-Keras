@@ -83,7 +83,7 @@ def vnet(pretrained_weights = None,input_size = (256,256,1),num_classes=1,is_tra
     print(model.output_shape)
     
     model_dice=dice_loss(smooth=1e-5,thresh=0.5)
-    model.compile(optimizer = Nadam(lr = 2e-3), loss = model_dice, metrics = ['accuracy'])
+    model.compile(optimizer = Nadam(lr = 2e-4), loss = model_dice, metrics = ['accuracy'])
     
     #plot_model(model, to_file='model.png')
     if(pretrained_weights):
