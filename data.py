@@ -24,19 +24,22 @@ COLOR_DICT = np.array([Sky, Building, Pole, Road, Pavement,
                           Tree, SignSymbol, Fence, Car, Pedestrian, Bicyclist, Unlabelled])
 
 
-def adjustData(img,mask,flag_multi_class,num_class):
+def adjustData(img,mask,flag_multi_class,num_class):#多类情况转换成one_hot向量
     if(flag_multi_class):#此程序中不是多类情况，所以不考虑这个
         img = img / 255
+        mask[mask==0]=0#mask必须转换成one_hot才可以计算
+        mask[mask==128]=1
+        mask[mask==191]=2
+        mask[mask==255]=3
         mask = mask[:,:,:,0] if(len(mask.shape) == 4) else mask[:,:,0]#if else的简洁写法，一行表达式，为真时放在前面
-        new_mask = np.zeros(mask.shape + (num_class,))#np.zeros里面是shape元组，此目的是扩展维度到5维
-
+        new_mask = np.zeros(mask.shape + (num_class,))#np.zeros里面是shape元组，此目的是扩展维度到num_class维
         for i in range(num_class):
             #for one pixel in the image, find the class in mask and convert it into one-hot vector
             #index = np.where(mask == i)
             #index_mask = (index[0],index[1],index[2],np.zeros(len(index[0]),dtype = np.int64) + i) if (len(mask.shape) == 4) else (index[0],index[1],np.zeros(len(index[0]),dtype = np.int64) + i)
             #new_mask[index_mask] = 1
             new_mask[mask == i,i] = 1
-        new_mask = np.reshape(new_mask,(new_mask.shape[0],new_mask.shape[1]*new_mask.shape[2],new_mask.shape[3])) if flag_multi_class else np.reshape(new_mask,(new_mask.shape[0]*new_mask.shape[1],new_mask.shape[2]))
+        new_mask = np.reshape(new_mask,(new_mask.shape[0],new_mask.shape[1],new_mask.shape[2],new_mask.shape[3])) if flag_multi_class else np.reshape(new_mask,(new_mask.shape[0],new_mask.shape[1],new_mask.shape[2]))
         mask = new_mask
     elif(np.max(img) > 1):
         img = img / 255
@@ -79,22 +82,24 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
         seed = seed)
     train_generator = zip(image_generator, mask_generator)#组合成一个生成器
     for (img,mask) in train_generator:#由于batch是2，所以一次返回两张，即img是一个2张灰度图片的数组，[2,256,256]
-        img,mask = adjustData(img,mask,flag_multi_class,num_class)#返回的img依旧是[2,256,256]
+        #print('mask:'+str(mask.shape))
+        img,mask = adjustData(img,mask,flag_multi_class,num_class)#返回的img依旧是[2,256,256,1]
+        #print('mask:'+str(mask.shape))
         yield (img,mask)#每次分别产出两张图片和标签
 
 
 
-def testGenerator(test_path,num_image = 30,target_size = (256,256),flag_multi_class = False,as_gray = True):
+def testGenerator(test_path,num_image = 30,target_size = (256,256),as_gray = True):
     for i in range(num_image):
         img = io.imread(os.path.join(test_path,"%d.png"%i),as_gray = as_gray)
         img = img / 255
         img = trans.resize(img,target_size)
-        img = np.reshape(img,img.shape+(1,)) if (not flag_multi_class) else img
-        img = np.reshape(img,(1,)+img.shape)#将测试图片扩展一个维度，与训练时的输入[2,256,256]保持一致
+        img = np.reshape(img,img.shape+(1,)) 
+        img = np.reshape(img,(1,)+img.shape)#将测试图片扩展一个维度，与训练时的输入[2,256,256,1]保持一致
         yield img
 
 
-def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
+def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 4,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
     image_name_arr = glob.glob(os.path.join(image_path,"%s*.png"%image_prefix))#相当于文件搜索，搜索某路径下与字符匹配的文件https://blog.csdn.net/u010472607/article/details/76857493/
     image_arr = []
     mask_arr = []
@@ -123,10 +128,11 @@ def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 2):
         img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
         io.imsave(os.path.join(save_path,"%d_predict.png"%i),img)
 '''
-def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 2):
+def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 4):
     for i,item in enumerate(npyfile):
         if flag_multi_class:
-            img = labelVisualize(num_class,COLOR_DICT,item)#多类的话就图成彩色，非多类（两类）的话就是黑白色
+            item_mask=np.argmax(item,axis=-1)#获取索引，也即求softmax中的最大值
+            img = labelVisualize(num_class,COLOR_DICT,item_mask)#多类的话就图成彩色，非多类（两类）的话就是黑白色
         else:
             img=item[:,:,0]
             print(np.max(img),np.min(img))
