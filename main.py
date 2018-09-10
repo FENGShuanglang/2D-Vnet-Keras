@@ -18,7 +18,7 @@ myGene = trainGenerator(2,'data/membrane/train','image','label',data_gen_args,sa
 
 model = vnet(num_class=num_classes)
 model_checkpoint = ModelCheckpoint('unet_membrane.hdf5', monitor='loss',verbose=1, save_best_only=True)#回调函数，第一个是保存模型路径，第二个是检测的值，检测Loss是使它最小，第三个是只保存在验证集上性能最好的模型
-model.fit_generator(myGene,steps_per_epoch=2,epochs=2,callbacks=[model_checkpoint])#steps_per_epoch指的是每个epoch有多少个batch_size，也就是训练集总样本数除以batch_size的值
+model.fit_generator(myGene,steps_per_epoch=300,epochs=2,callbacks=[model_checkpoint])#steps_per_epoch指的是每个epoch有多少个batch_size，也就是训练集总样本数除以batch_size的值
 #上面一行是利用生成器进行batch_size数量的训练，样本和标签通过myGene传入
 testGene = testGenerator("data/membrane/test")
 results = model.predict_generator(testGene,30,verbose=1)#30是step,steps: 在停止之前，来自 generator 的总步数 (样本批次)。 可选参数 Sequence：如果未指定，将使用len(generator) 作为步数。
