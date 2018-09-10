@@ -6,7 +6,7 @@ import skimage.transform as trans
 import numpy as np
 import keras.backend as K
 #from keras import optimizers
-from keras.utils import plot_model#使用plot_mode时打开
+#from keras.utils import plot_model#使用plot_mode时打开
 from keras.models import Model
 from keras.layers import Conv2D,PReLU,Conv2DTranspose,add,concatenate,Input,Dropout
 from keras.optimizers import Nadam
@@ -90,7 +90,7 @@ def vnet(pretrained_weights = None,input_size = (256,256,1),num_class=1,is_train
     model_dice=dice_loss(smooth=1e-5,thresh=0.5)
     model.compile(optimizer = Nadam(lr = 2e-3), loss = model_dice, metrics = ['accuracy'])
     
-    plot_model(model, to_file='model.png')
+    #plot_model(model, to_file='model.png')
     if(pretrained_weights):
     	model.load_weights(pretrained_weights)
     return model
