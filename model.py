@@ -16,11 +16,11 @@ from keras import backend as keras
 def dice_coef(y_true, y_pred, smooth, thresh):
     #y_pred =K.cast((K.greater(y_pred,thresh)), dtype='float32')#转换为float型
     #y_pred = y_pred[y_pred > thresh]=1.0
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f,axis=-1)
-
-    return K.mean((2. * intersection + smooth) / (K.sum(K.square(y_true_f),axis=-1) + K.sum(K.square(y_pred_f),axis=-1) + smooth))
+    y_true_f =y_true# K.flatten(y_true)
+    y_pred_f =y_pred# K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f,axis=(0,1,2))
+    denom =K.sum(K.square(y_true_f),axis=(0,1,2)) + K.sum(K.square(y_pred_f),axis=(0,1,2))
+    return K.mean((2. * intersection + smooth) /(denom + smooth))
 
 def dice_loss(smooth, thresh):
     def dice(y_true, y_pred):
