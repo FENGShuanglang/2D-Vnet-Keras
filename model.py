@@ -54,7 +54,7 @@ def up_resBlock(forward_conv,input_conv,stage):#扩展路径
     conv=concatenate([forward_conv,input_conv],axis = -1)
     print('conv_concatenate:',conv.get_shape().as_list())
     for _ in range(3 if stage>3 else stage):
-        conv=PReLU()(BatchNormalization()(Conv2D(16*(2**(stage-1)), 5, activation = None, padding = 'same', kernel_initializer = 'he_normal')(conv)))
+        conv=PReLU()(BatchNormalization()(Conv2DTranspose(16*(2**(stage-1)), 5, activation = None, padding = 'same', kernel_initializer = 'he_normal')(conv)))
         print('conv_up_stage_%d:' %stage,conv.get_shape().as_list())#输出扩展路径中每个stage内的卷积
     conv_add=PReLU()(add([input_conv,conv]))
     if stage>1:
